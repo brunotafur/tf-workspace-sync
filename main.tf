@@ -5,21 +5,21 @@ locals {
 }
 
 # validate that account admin group exists
-data "databricks_group" "admins" {
-  for_each     = local.aad_state.account_admin_groups_by_id
-  display_name = each.value.display_name
-  recursive    = false
-}
+#data "databricks_group" "admins" {
+#  for_each     = local.aad_state.account_admin_groups_by_id
+#  display_name = each.value.display_name
+#  recursive    = false
+#}
 
 # set admin group the admin rights
-resource "databricks_group_role" "acount_admins" {
-  for_each = local.aad_state.account_admin_groups_by_id
-  group_id = data.databricks_group.admins[each.key].id
-  role     = "account_admin"
-  depends_on = [
-    data.databricks_group.admins
-  ]
-}
+#resource "databricks_group_role" "acount_admins" {
+#  for_each = local.aad_state.account_admin_groups_by_id
+#  group_id = data.databricks_group.admins[each.key].id
+#  role     = "account_admin"
+#  depends_on = [
+#    data.databricks_group.admins
+#  ]
+#}
 
 # create or remove groups within databricks - all governed by "groups_to_sync" variable
 # indexed by AAD object_id of a group
@@ -28,12 +28,12 @@ resource "databricks_group" "this" {
   for_each = {
     for group_id, data in local.aad_state.groups_by_id :
     group_id => data
-    if lookup(local.aad_state.account_admin_groups_by_id, group_id, "") == ""
+    #if lookup(local.aad_state.account_admin_groups_by_id, group_id, "") == ""
   }
   display_name = each.value.display_name
   force        = true
   depends_on = [
-    databricks_group_role.acount_admins
+    #databricks_group_role.acount_admins
   ]
 }
 
@@ -66,7 +66,9 @@ locals {
   # make this dataset as small as possible, to make TF use less resources
   # there seems to be CPU usage increase when `v` is a big object
   merged_data = {
-    for k, v in merge(databricks_user.this, databricks_service_principal.this, databricks_group.this, data.databricks_group.admins) :
+    for k, v in merge(databricks_user.this, databricks_service_principal.this, databricks_group.this
+    #,data.databricks_group.admins
+    ) :
     k => v.id
   }
 }
